@@ -354,8 +354,7 @@ treechildren::-moz-tree-cell-text(private) {
  font-style: italic !important;
 }
 treechildren::-moz-tree-image(iconic,addbutton) {
- list-style-image: url(tools.png);
- -moz-image-region: rect(0px,52px,26px,26px);
+ list-style-image: url(add.png);
 }
 @media (min-resolution: 2dppx) {
  treechildren::-moz-tree-image(iconic) {

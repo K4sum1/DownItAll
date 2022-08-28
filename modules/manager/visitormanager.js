@@ -5,7 +5,7 @@
 
 const DIA = require("api");
 const {LOCALE} = require("version");
-const {getTimestamp, normalizeMetaPrefs} = require("utils");
+const {getTimestamp, normalizeMetaPrefs, hexdigest} = require("utils");
 const {identity} = require("support/memoize");
 
 function Visitor() {
@@ -147,6 +147,9 @@ HttpVisitor.prototype = {
       continue;
      }
      v = atob(v);
+     let regHex = /^[0-9A-Fa-f]+$/g;
+     if (!regHex.test(v))
+      v = hexdigest(v);
      v = new DIA.Hash(v, t);
      if (!this.hash || this.hash.q < v.q) {
       this.hash = v;
@@ -155,6 +158,18 @@ HttpVisitor.prototype = {
     catch (ex) {
      // no-op
     }
+   }
+  }
+  catch (ex) {}
+  try {
+   let md = chan.getResponseHeader("content-md5");
+   let v = atob(md);
+   let regHex = /^[0-9A-Fa-f]+$/g;
+   if (!regHex.test(v))
+    v = hexdigest(v);
+   v = new DIA.Hash(v, 'MD5');
+   if (!this.hash || this.hash.q < v.q) {
+    this.hash = v;
    }
   }
   catch (ex) {}

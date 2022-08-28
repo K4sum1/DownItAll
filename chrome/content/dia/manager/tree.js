@@ -377,13 +377,8 @@ var Tree = {
   let cmpFun = (function () {
    switch (id) {
    case 'colTask':
-    if (Prefs.showOnlyFilenames) {
-     return function(d) {
-      return d.destinationName;
-     };
-    }
     return function(d) {
-     return d.urlManager.usable;
+     return d.destinationName;
     };
    case 'colDown':
     return function(d) {
@@ -407,7 +402,7 @@ var Tree = {
     };
    case 'colDomain':
     return function(d) {
-     return d.urlManager.domain;
+     return d.urlManager.usable;
     };
    };
    throw new Exception("cmpFun not implemented");
@@ -556,23 +551,19 @@ var Tree = {
   if (!d) {
    return '';
   }
-
-  switch (col.index) {
-   case 0:
-    
-    return '';
-   case 1:  return Prefs.showOnlyFilenames ? d.destinationName : d.urlManager.usable;
-   case 2:  return d.urlManager.domain;
-   case 4:  return d.percent;
-   case 5:  return d.partialString;
-   case 6:  return d.remainingString;
-   case 7:  return d.totalString;
-   case 8:  return d.speed;
-   case 9:  return d.status;
-   case 10:  return d.parts;
-   case 11:  return d.mask;
-   case 12:  return d.destinationPath;
-   case 13: return d.prettyHash;
+  switch (col.id) {
+   case 'colTask':  return d.destinationName;
+   case 'colPercent':  return d.percent;
+   case 'colDown':  return d.partialString;
+   case 'colRemain':  return d.remainingString;
+   case 'colSize':  return d.totalString;
+   case 'colSpeed':  return d.speed;
+   case 'colStatus':  return d.status;
+   case 'colSegments':  return d.parts;
+   case 'colMask':  return d.mask;
+   case 'colPath':  return d.destinationPath;
+   case 'colDomain': return d.urlManager.usable;
+   case 'colHash': return d.prettyHash;
   }
   return '';
  },
@@ -581,7 +572,7 @@ var Tree = {
    return;
   }
   text = Utils.getUsableFileName(text);
-  if (col.index !== 1 || !text) {
+  if (col.id !== 'colTask' || !text) {
    return;
   }
   const d = this._filtered[idx];
@@ -625,7 +616,7 @@ var Tree = {
  isContainerOpen: function(idx) { return false; },
  isContainerEmpty: function(idx) { return false; },
  isSeparator: function(idx) { return false; },
- isEditable: function(row, col) { return col.index === 1; },
+ isEditable: function(row, col) { return col.id === 'colTask'; },
 
  // will grab the "icon" for a cell.
  getImageSrc: function(idx, col) {},
@@ -633,7 +624,7 @@ var Tree = {
   if (idx === this.rowCount - 1) {
    return 3;
   }
-  if (col.index === 3) {
+  if (col.id === 'colProgress') {
    const d = this._filtered[idx];
    if (!d) {
     return 2;
@@ -654,7 +645,7 @@ var Tree = {
   if (idx === this.rowCount - 1) {
    return null;
   }
-  if (col.index === 3) {
+  if (col.id === 'colProgress') {
    const d = this._filtered[idx];
    if (!d) {
     return 0;
@@ -688,88 +679,88 @@ var Tree = {
  _cpprop_proginprogress: "progress inprogress",
  _cpprop_progcanceled: "progress canceled",
  getCellProperties: function(idx, col) {
-  const cidx = col.index;
+  const cid = col.id;
   if (idx === this.rowCount - 1) {
-   if (cidx !== 0)
+   if (cid !== 'colAction')
     return "";
    return this._cpprop_iconicadd;
   }
-  if (cidx !== 0 && cidx !== 1 && cidx !== 3) {
-   return "";
-  }
-  else if (cidx === 0) {
-   let d = this._filtered[idx];
-   if (!d) {
-    return this._cpprop_iconic;
-   }
-   switch (d.state) {
-   case QUEUED:
-    return this._cpprop_iconic;
-   case COMPLETE:
-    if (d.hashCollection) {
-     return this._cpprop_iconicverified;
+  let d;
+  switch (cid) {
+   case 'colAction':
+    d = this._filtered[idx];
+    if (!d) {
+     return this._cpprop_iconic;
     }
-    return this._cpprop_iconiccomplete;
-   case PAUSED:
-    if (!d.totalSize || d.progress < 5) {
-     if (d.autoRetrying) {
-      return this._cpprop_iconicpausedundeterminedretrying;
-     }
-     return this._cpprop_iconicpausedundetermined;
+    switch (d.state) {
+     case QUEUED:
+      return this._cpprop_iconic;
+     case COMPLETE:
+      if (d.hashCollection) {
+       return this._cpprop_iconicverified;
+      }
+      return this._cpprop_iconiccomplete;
+     case PAUSED:
+      if (!d.totalSize || d.progress < 5) {
+       if (d.autoRetrying) {
+        return this._cpprop_iconicpausedundeterminedretrying;
+       }
+       return this._cpprop_iconicpausedundetermined;
+      }
+      if (d.autoRetrying) {
+       return this._cpprop_iconicpausedretrying;
+      }
+      return this._cpprop_iconicpaused;
+     case FINISHING:
+      return this._cpprop_iconicfinishing;
+     case RUNNING:
+      return this._cpprop_iconicinprogress;
+     case CANCELED:
+      return this._cpprop_iconiccanceled;
     }
-    if (d.autoRetrying) {
-     return this._cpprop_iconicpausedretrying;
+    break;
+   case 'colTask':
+    d = this._filtered[idx];
+    if (!d) {
+     return "";
     }
-    return this._cpprop_iconicpaused;
-   case FINISHING:
-    return this._cpprop_iconicfinishing;
-   case RUNNING:
-    return this._cpprop_iconicinprogress;
-   case CANCELED:
-    return this._cpprop_iconiccanceled;
-   }
-  }
-  else if (cidx === 1) {
-   let d = this._filtered[idx];
-   if (!d) {
-    return "";
-   }
-   return d.iconProp;
-  }
-  else if (cidx === 3) {
-   let d = this._filtered[idx];
-   if (!d) {
-    return this._cpprop_prog;
-   }
-   switch (d.state) {
-   case QUEUED:
-    return this._cpprop_prog;
-   case COMPLETE:
-    if (Prefs.removeCompletedImmediate) {
-     this._removeByState(COMPLETE, false);
+    return d.iconProp;
+    break;
+   case 'colProgress':
+    d = this._filtered[idx];
+    if (!d) {
+     return this._cpprop_prog;
     }
-    if (d.hashCollection) {
-     return this._cpprop_progverified;
+    switch (d.state) {
+     case QUEUED:
+      return this._cpprop_prog;
+     case COMPLETE:
+      if (Prefs.removeCompletedImmediate) {
+       this._removeByState(COMPLETE, false);
+      }
+      if (d.hashCollection) {
+       return this._cpprop_progverified;
+      }
+      return this._cpprop_progcomplete;
+     case PAUSED:
+      if (!d.totalSize || d.progress < 5) {
+       if (d.autoRetrying) {
+        return this._cpprop_progpausedundeterminedretrying;
+       }
+       return this._cpprop_progpausedundetermined;
+      }
+      if (d.autoRetrying) {
+       return this._cpprop_progpausedretrying;
+      }
+      return this._cpprop_progpaused;
+     case FINISHING:
+      return this._cpprop_progfinishing;
+     case RUNNING:
+      return this._cpprop_proginprogress;
+     case CANCELED:
+      return this._cpprop_progcanceled;
     }
-    return this._cpprop_progcomplete;
-   case PAUSED:
-    if (!d.totalSize || d.progress < 5) {
-     if (d.autoRetrying) {
-      return this._cpprop_progpausedundeterminedretrying;
-     }
-     return this._cpprop_progpausedundetermined;
-    }
-    if (d.autoRetrying) {
-     return this._cpprop_progpausedretrying;
-    }
-    return this._cpprop_progpaused;
-   case FINISHING:
-    return this._cpprop_progfinishing;
-   case RUNNING:
-    return this._cpprop_proginprogress;
-   case CANCELED:
-    return this._cpprop_progcanceled;
-   }
+    break;
   }
   return "";
  },
@@ -1964,13 +1955,15 @@ var Tree = {
    this.elem.setAttribute("editable", true);
    try {
     this.elem.startEditing(ci.value, this.box.columns.getColumnAt(1));
-    window.setTimeout(function(field) {
-     let stx = field.value;
-     if (stx.indexOf('.') === -1)
-      field.setSelectionRange(0, stx.length);
-     else
-      field.setSelectionRange(0, stx.lastIndexOf('.'));
-    }, 33, this.elem.inputField);
+    if (!Prefs.selectExtension) {
+     window.setTimeout(function(field) {
+      let stx = field.value;
+      if (stx.indexOf('.') === -1)
+       field.setSelectionRange(0, stx.length);
+      else
+       field.setSelectionRange(0, stx.lastIndexOf('.'));
+     }, 33, this.elem.inputField);
+    }
    }
    finally {
     this.elem.removeAttribute("editable");

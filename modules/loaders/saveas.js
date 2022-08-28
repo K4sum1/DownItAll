@@ -88,7 +88,7 @@ function load(window, document) {
    log(LOG_DEBUG, "save-as reverted!");
   };
 
-  let url, filename, referrer, mask, isPrivate;
+  let url, filename, filesize, referrer, mask, isPrivate;
 
   let download = turbo => {
    if (turbo) {
@@ -102,6 +102,8 @@ function load(window, document) {
    };
    if (filename)
     item.fileName = filename;
+   if (filesize)
+    item.fileSize = filesize;
 
    DIA.saveSingleItem(window, turbo, item);
    let de = document.documentElement;
@@ -178,15 +180,22 @@ function load(window, document) {
   url = new DIA.URL(ml ? ml : url);
   if (!ml)
   {
-   let newSpec = url._url.spec;
-   let ioService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
-   let prevURI = ioService.newURI(prevSpec).QueryInterface(Components.interfaces.nsIURL);
-   let newURI = ioService.newURI(newSpec).QueryInterface(Components.interfaces.nsIURL);
-   if (newURI.fileName && newURI.fileExtension) {
-    filename = newURI.fileName;
+   if (dialog.mLauncher.contentLength > 0) {
+    filesize = dialog.mLauncher.contentLength;
    }
-   else if (prevURI.fileName && prevURI.fileExtension) {
-    filename = decodeURIComponent(prevURI.fileName);
+   if (dialog.mLauncher.suggestedFileName) {
+    filename = dialog.mLauncher.suggestedFileName;
+   } else {
+    let newSpec = url._url.spec;
+    let ioService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+    let prevURI = ioService.newURI(prevSpec).QueryInterface(Components.interfaces.nsIURL);
+    let newURI = ioService.newURI(newSpec).QueryInterface(Components.interfaces.nsIURL);
+    if (newURI.fileName && newURI.fileExtension) {
+     filename = newURI.fileName;
+    }
+    else if (prevURI.fileName && prevURI.fileExtension) {
+     filename = decodeURIComponent(prevURI.fileName);
+    }
    }
   }
 

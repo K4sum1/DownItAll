@@ -308,10 +308,12 @@ function Matcher() {
 }
 Matcher.prototype = {
  _available: {
+  'actionmatch': StatusMatch,
   'textmatch': TextMatch,
   'downloadmatch': new MatcherTee(FilterMatch, DomainMatch),
   'pathmatch': PathMatch,
   'statusmatch': new MatcherTee(StatusMatch, RemainderMatch),
+  'remaindermatch': RemainderMatch,
   'sizematch': SizeMatch,
   'domainmatch': DomainMatch
  },
